@@ -19,5 +19,6 @@
   "homepage": "https://github.com/carlos-plata/eth-flashloans#readme",
   "dependencies": {
     "web3": "^1.3.0"
-  }
+  },
+  "devDependencies": {}
 }
