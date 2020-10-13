@@ -17,7 +17,7 @@ const AMOUNT_BAND_WEI = web3.utils.toWei((AMOUNT_ETH * RECENT_ETH_PRICE).toStrin
 const init = async () => {
     //uniswap
     const [band, weth] = await Promise.all(
-        [addresses.tokens.pickle, addresses.tokens.weth].map(tokenAddress => (
+        [addresses.tokens.dai, addresses.tokens.weth].map(tokenAddress => (
             UNISWAP.Token.fetchData(
                 UNISWAP.ChainId.MAINNET, 
                 tokenAddress,
@@ -30,7 +30,7 @@ const init = async () => {
 
     //sushiswap
     const [sushiband, sushiweth] = await Promise.all(
-        [addresses.tokens.pickle, addresses.tokens.weth].map(sushiTokenAddress => (
+        [addresses.tokens.dai, addresses.tokens.weth].map(sushiTokenAddress => (
             new SUSHISWAP.Token(SUSHISWAP.ChainId.MAINNET, sushiTokenAddress, 18)
     )));
     const sushiBandWeth = await SUSHISWAP.Fetcher.fetchPairData(sushiband, sushiweth);
