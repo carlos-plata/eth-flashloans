@@ -4,7 +4,17 @@ const UNISWAP = require('@uniswap/sdk');
 const SUSHISWAP = require('@sushiswap/sdk');
 const abis = require('./abis');
 const {mainnet: addresses} = require('./addresses');
-const web3 = new Web3(new Web3.providers.WebsocketProvider(process.env.INFURA_URL));
+const web3 = new Web3(
+    new Web3.providers.WebsocketProvider(process.env.INFURA_URL)
+);
+const MockERC20 = artifacts.require('MockERC20');
+//const SakeSwapRouter = artifacts.require('SakeSwapRouter');
+//const SakeSwapFactory = artifacts.require('SakeSwapFactory');
+//const SakeSwapPair = artifacts.require('SakeSwapPair');
+//const Weth = artifacts.require('WETH9');
+
+web3.eth.accounts.wallet.add(process.env.PRIVATE_KEY);
+
 const kyber = new web3.eth.Contract(
     abis.kyber.kyberNetworkProxy,
     addresses.kyber.kyberNetworkProxy
@@ -15,6 +25,14 @@ const AMOUNT_ETH_WEI = web3.utils.toWei(AMOUNT_ETH.toString());
 const AMOUNT_BAND_WEI = web3.utils.toWei((AMOUNT_ETH * RECENT_ETH_PRICE).toString());
 
 const init = async () => {
+    //sakeswap
+    //this.weth = await Weth.new();
+    //this.factory = await SakeSwapFactory.new(web3.eth.accounts.wallet.address);
+    //this.router = await SakeSwapRouter.new(this.factory.address, this.weth.address)
+    //this.tokenA = await MockERC20.new('TOKENA', 'TOKENA', '10000000000000000000000000000');
+    //this.tokenB = await MockERC20.new('TOKENB', 'TOKENB', '10000000000000000000000000000');
+    //this.tokenABPair = await SakeSwapPair.at((await this.factory.createPair(this.tokenA.address, this.tokenB.address)).logs[0].args.pair);
+
     //uniswap
     const [band, weth] = await Promise.all(
         [addresses.tokens.dai, addresses.tokens.weth].map(tokenAddress => (
@@ -52,7 +70,7 @@ const init = async () => {
                   .methods
                   .getExpectedRate(
                     '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', 
-                    addresses.tokens.dai, 
+                    addresses.tokens.uni, 
                     AMOUNT_ETH_WEI
                   ) 
                   .call()
@@ -73,7 +91,7 @@ const init = async () => {
                 buy: parseFloat(AMOUNT_BAND_WEI/(uniswapResults[0][0].toExact() * 10 ** 18)),
                 sell: parseFloat(uniswapResults[1][0].toExact()/AMOUNT_ETH)
             };
-            console.log('Uniswap ETH/PICKLE');
+            console.log('Uniswap ETH/DAI');
             console.log(uniswapRates);
 
             //sushiswap rates
@@ -85,9 +103,23 @@ const init = async () => {
                 buy: parseFloat(AMOUNT_BAND_WEI/(sushiswapResults[0][0].toExact() * 10 ** 18)),
                 sell: parseFloat(sushiswapResults[1][0].toExact()/AMOUNT_ETH)
             };
-            console.log('Sushiswap ETH/PICKLE');
+            console.log('Sushiswap ETH/DAI');
             console.log(sushiswapRates);
-            
+            const operation1= kyberRates.sell - uniswapRates.buy;
+            const operation2= uniswapRates.sell - kyberRates.buy;
+            console.log('KYBER SELL - UNI BUY: ' + operation1);
+            console.log('KYBER BUY - UNI SELL: ' + operation2);
+
+            const operation3= kyberRates.sell - sushiswapRates.buy;
+            const operation4= sushiswapRates.sell - kyberRates.buy;
+            console.log('KYBER SELL - SUSHI BUY: ' + operation3);
+            console.log('KYBER BUY - SUSHI SELL: ' + operation4);
+
+            const operation5= uniswapRates.sell - sushiswapRates.buy;
+            const operation6= sushiswapRates.sell - uniswapRates.buy;
+            console.log('UNI SELL - SUSHI BUY: ' + operation3);
+            console.log('UNI BUY - SUSHI SELL: ' + operation4);
+
             //const gasPrice = await web3.eth.getGasPrice();
             //const txCost = 200000 * parseInt(gasPrice);
             //const currentEthPrice = (uniswapRates.buy + uniswapRates.sell) / 2; 
