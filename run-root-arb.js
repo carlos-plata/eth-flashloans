@@ -44,11 +44,11 @@ const init = async () => {
 
      web3.eth.subscribe('newBlockHeaders').on('data', async block => {
         console.log(`New block received. Block # ${block.number}`);
-        //goMakeMoney(["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0x1df2099f6AbBf0b05C12a61835137D84F10DAA96"], ETH_AMOUNT, 'WETH > WBTC > ROOT > KETH');
+        goMakeMoney(["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0x1df2099f6AbBf0b05C12a61835137D84F10DAA96"], ETH_AMOUNT, 'WETH > WBTC > ROOT > KETH');
         //goMakeMoney(["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"], ETH_AMOUNT, 'WETH > WBTC > ROOT > WETH');
         //goMakeMoney(["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0x1df2099f6AbBf0b05C12a61835137D84F10DAA96"], ETH_AMOUNT, 'WETH > ROOT > KETH');
         //goMakeMoney(["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"], ETH_AMOUNT, 'WETH > ROOT > WBTC');
-        goMakeMoney(["0x1df2099f6AbBf0b05C12a61835137D84F10DAA96", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"], ETH_AMOUNT, 'KETH > ROOT > WETH');
+        //goMakeMoney(["0x1df2099f6AbBf0b05C12a61835137D84F10DAA96", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"], ETH_AMOUNT, 'KETH > ROOT > WETH');
         //goMakeMoney(["0x1df2099f6AbBf0b05C12a61835137D84F10DAA96", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"], ETH_AMOUNT, 'KETH > ROOT > WBTC > WETH');
     }).on('error', error => {
         console.log(error);
