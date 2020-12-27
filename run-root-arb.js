@@ -77,8 +77,9 @@ async function goMakeMoney(path, amount, title){
         }        
         return web3.utils.fromWei((response).toString(), 'ether');
       });
-      estimatedProfit = web3.utils.fromWei((estimatedProfit).toString(), 'ether');
-      console.log('ESTIMATED PROFIT IN ETHER >>> ' + estimatedProfit);
+      console.log('ESTIMATED PROFIT IN ETHER >>> ' + web3.utils.fromWei((estimatedProfit).toString(), 'ether'));
+      estimatedProfit = web3.utils.fromWei((estimatedProfit).toString(), 'ether') * 0.9;
+      console.log('ESTIMATED PROFIT IN ETHER (90%)>>> ' + estimatedProfit);
       let txGasPrice = gasPrice * 2;
       console.log('UPDATED GAS PRICE IN WEI >>> ' + txGasPrice);
       console.log('UPDATED GAS PRICE IN GWEI >>> ' + web3.utils.fromWei((txGasPrice).toString(), 'gwei'));     
@@ -88,10 +89,10 @@ async function goMakeMoney(path, amount, title){
       if((estimatedProfit > PROFIT) && (estimatedProfit > txGasPriceFormatted)){
           console.log('PROFIT OPPORTUNITY IN >>>> ' + title);
           console.log('TX GAS PRICE >>>> ' + txGasPriceFormatted + ', PROFIT >>>> ' + estimatedProfit);
-          rootkitmoneyToken.methods.gimmeMoney(path, amount, 0).send({from: admin, gas: 999999, gasPrice: txGasPrice.toString()})
-            .then(function(receipt){
-                console.log(receipt);
-            });
+          //rootkitmoneyToken.methods.gimmeMoney(path, amount, 0).send({from: admin, gas: 999999, gasPrice: txGasPrice.toString()})
+          //  .then(function(receipt){
+          //      console.log(receipt);
+          //  });
       }else{
           console.log('PROFIT LESS THAN: ' + PROFIT + '. NO CURRENT OPPORTUNITIES IN >>>> ' + title);
       }
