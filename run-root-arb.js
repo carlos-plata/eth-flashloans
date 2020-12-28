@@ -23,8 +23,6 @@ const rootkitmoneyToken = new web3.eth.Contract(rootkitmoneyabi.rootkitmoney,add
 
 const ETH_AMOUNT= '6000000000000000000';
 
-const PROFIT= 0.01;
-
 const init = async () => {
     let ethPrice;
     const updateEthPrice = async () => {
@@ -86,7 +84,7 @@ async function goMakeMoney(path, amount, title){
       let txGasPriceFormatted= web3.utils.fromWei((txGasPrice).toString(), 'micro');
       console.log('UPDATED GAS PRICE IN ETHER >>> ' + txGasPriceFormatted);
 
-      if((estimatedProfit > PROFIT) && ((estimatedProfit - PROFIT) > txGasPriceFormatted)){
+      if(estimatedProfit > txGasPriceFormatted){
           console.log('PROFIT OPPORTUNITY IN >>>> ' + title);
           console.log('TX GAS PRICE >>>> ' + txGasPriceFormatted + ', PROFIT >>>> ' + estimatedProfit);
           rootkitmoneyToken.methods.gimmeMoney(path, amount, 0).send({from: admin, gas: 999999, gasPrice: txGasPrice.toString()})
@@ -94,6 +92,6 @@ async function goMakeMoney(path, amount, title){
                 console.log(receipt);
             });
       }else{
-          console.log('PROFIT LESS THAN: ' + PROFIT + '. NO CURRENT OPPORTUNITIES IN >>>> ' + title);
+          console.log('ESTIMATED PROFIT: ' +estimatedProfit + ' IS LESS THAN POSSIBE GAS COST: ' + txGasPriceFormatted + '. NO CURRENT OPPORTUNITIES IN >>>> ' + title);
       }
 }
