@@ -23,7 +23,7 @@ const rootkitmoneyToken = new web3.eth.Contract(rootkitmoneyabi.rootkitmoney,add
 
 const ETH_AMOUNT= '6000000000000000000';
 
-const PROFIT= 0.05;
+const PROFIT= 0.01;
 
 const init = async () => {
     let ethPrice;
