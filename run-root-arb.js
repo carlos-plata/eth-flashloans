@@ -2,7 +2,10 @@ require('dotenv').config()
 const Web3 = require('web3');
 const abis = require('./abis');
 const rootkitmoneyabi = require('./rootkitmoneyabi');
+const flashloanabi = require('./flashloanabi');
+const moneymakerabi = require('./moneymakerabi');
 const { mainnet: addresses } = require('./addresses');
+const Flashloan = require('./build/contracts/Flashloan.json');
 
 const web3 = new Web3(
     new Web3.providers.WebsocketProvider(process.env.INFURA_URL)
@@ -20,8 +23,19 @@ const kyber = new web3.eth.Contract(
 const ONE_WEI = web3.utils.toBN(web3.utils.toWei('1'));
 
 const rootkitmoneyToken = new web3.eth.Contract(rootkitmoneyabi.rootkitmoney,addresses.tokens.rootkitmoney);
+const flashloan = new web3.eth.Contract(flashloanabi.flashloan, addresses.tokens.flashloan);
+const moneymaker = new web3.eth.Contract(moneymakerabi.moneymaker, addresses.tokens.moneymaker);
 
-const ETH_AMOUNT= '6000000000000000000';
+const ETH_AMOUNT= web3.utils.toWei('1', 'ether');
+
+const TOKEN_PATH = {
+    //WETH_WBTC_ROOT_KETH: ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0x1df2099f6AbBf0b05C12a61835137D84F10DAA96'],
+    //WEHT_WBTC_ROOT_WETH: ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'],
+    WETH_ROOT_KETH: ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0x1df2099f6AbBf0b05C12a61835137D84F10DAA96']
+    //WETH_ROOT_WBTC: ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'],
+    //KETH_ROOT_WETH: ['0x1df2099f6AbBf0b05C12a61835137D84F10DAA96', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'],
+    //KETH_ROOT_WBTC_WETH: ['0x1df2099f6AbBf0b05C12a61835137D84F10DAA96', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2']
+}
 
 const init = async () => {
     let ethPrice;
@@ -39,59 +53,79 @@ const init = async () => {
     await updateEthPrice();
     setInterval(updateEthPrice, 15000);
     console.log('CURRENT ETH PRICE >>> ' + ethPrice);
-
      web3.eth.subscribe('newBlockHeaders').on('data', async block => {
         console.log(`New block received. Block # ${block.number}`);
-        //goMakeMoney(["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0x1df2099f6AbBf0b05C12a61835137D84F10DAA96"], ETH_AMOUNT, 'WETH > WBTC > ROOT > KETH');
-        //goMakeMoney(["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"], ETH_AMOUNT, 'WETH > WBTC > ROOT > WETH');
-        goMakeMoney(["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0x1df2099f6AbBf0b05C12a61835137D84F10DAA96"], ETH_AMOUNT, 'WETH > ROOT > KETH');
-        //goMakeMoney(["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"], ETH_AMOUNT, 'WETH > ROOT > WBTC');
-        //goMakeMoney(["0x1df2099f6AbBf0b05C12a61835137D84F10DAA96", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"], ETH_AMOUNT, 'KETH > ROOT > WETH');
-        //goMakeMoney(["0x1df2099f6AbBf0b05C12a61835137D84F10DAA96", "0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E", "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"], ETH_AMOUNT, 'KETH > ROOT > WBTC > WETH');
+        for (let key of Object.keys(TOKEN_PATH)) {
+            goMakeMoney(TOKEN_PATH[key], key, ETH_AMOUNT, ethPrice);
+        }
     }).on('error', error => {
         console.log(error);
     });
 }
 init();
 
-async function goMakeMoney(path, amount, title){
-    let gasPrice;
-    web3.eth.getGasPrice()
-    .then(function(response){
-        gasPrice = response;
-    }).catch(function(error){
-        console.log(error);
-    });
-    let block = await web3.eth.getBlock("latest");
-    let currentGasLimit = block.gasLimit;
-    console.log('CURRENT GAS PRICE >>> ' + gasPrice);
-    console.log("CURRENT GAS LIMIT >>> " + currentGasLimit);
+async function goMakeMoney(tokenPath, key, amount, ethPrice){
+    let gasPrice= await web3.eth.getGasPrice();
+    let pendingBlockGasLimit= await web3.eth.getBlock("pending")
+                                    .then(function (response){
+                                        return response.gasLimit;
+                                    });
+    console.log('CURRENT GAS PRICE in WEI >>> ' + gasPrice);
+    console.log('CURRENT PENDING BLOCK GAS LIMIT in WEI >>> ' + pendingBlockGasLimit);
+    console.log('CURRENT GAS PRICE IN ETHER >>> ' + web3.utils.fromWei(web3.utils.toBN(gasPrice), 'ether'));
+    let estimatedGasCost = web3.utils.toBN(gasPrice).mul(web3.utils.toBN('50')).mul(ethPrice);
+    console.log('ESTIMATED GAS COST IN WEI >>>> ' + estimatedGasCost);
+    estimatedGasCost= web3.utils.fromWei(web3.utils.toBN(estimatedGasCost), 'ether');
+    estimatedGasCost= ((estimatedGasCost * web3.utils.fromWei(web3.utils.toBN(amount), 'ether')) * ethPrice);
+    console.log('ESTIMATED GAS COST IN USD >>>> ' + estimatedGasCost);
     console.log('AMOUNT TO SPEND IN WEI >>>> ' + amount);
+    console.log('AMOUNT TO SPEND IN ETHER >>>> ' + web3.utils.fromWei(web3.utils.toBN(amount), 'ether'));
+    let estimatedProfit= await calculateEstimatedProfit(tokenPath, amount);
+    console.log('ESTIMATED PROFIT IN WEI >>> ' + estimatedProfit);
+    console.log('ESTIMATED PROFIT IN ETHER >>> ' + web3.utils.fromWei(web3.utils.toBN(estimatedProfit), 'ether'));
+    estimatedProfit= web3.utils.fromWei(web3.utils.toBN(estimatedProfit).mul(ethPrice), 'ether');
+    console.log('ESTIMATED PROFIT IN USD >>> ' + estimatedProfit);
 
-    let estimatedProfit= await rootkitmoneyToken.methods.estimateProfit(path,amount).call(function (err, response) {
+    let txCost= await flashloan.methods.initiateFlashloan(addresses.dydx.solo, addresses.tokens.weth, amount, tokenPath)
+    .estimateGas({from: admin, gas: pendingBlockGasLimit})
+    .then(function(gasAmount){
+        console.log('THIS IS THE COST OF INITIATE FLASH LOAN >>>> ' + gasAmount);
+        return gasAmount;
+    })
+    .catch(function(error){
+        console.log('EN SERIO!!! >>>> ');
+        console.log(error);
+    })
+
+    if(estimatedProfit > estimatedGasCost){
+        console.log('OPPORTUNITY FOR ' +  key + ' GO MAKE MONEY !!! >>>>');
+        //gasPrice = gasPrice * 1.1;
+        // using the promise
+        /*flashloan.methods.initiateFlashloan(addresses.dydx.solo, addresses.tokens.weth, amount, tokenPath)
+        .send({from: admin, gasPrice: gasPrice, gas: pendingBlockGasLimit})
+        .on('receipt', function(receipt){
+            console.log('PRINTING TX RECEIPT >>>> ');
+            console.log(receipt);
+        }).on('error', function(error, receipt){
+            console.log('PRINTING ERROR >>>> ');
+            console.log(error);
+            if(receipt){
+                console.log('PRINTING RECEIPT >>>> ');
+                console.log(receipt);
+            }
+        });*/
+    }else{
+        console.log('ESTIMATED PROFIT: ' + estimatedProfit + ' IS LESS THAN POSSIBE GAS COST: ' + estimatedGasCost + '. NO CURRENT OPPORTUNITIES IN >>>> ' + key);
+    }
+}
+
+async function calculateEstimatedProfit(tokenPath, amount){
+    let estimatedProfit= await rootkitmoneyToken.methods.estimateProfit(tokenPath,amount).call(function (err, response) {
         if (err) {
           console.log("An error occured", err);
           return
         }        
         return web3.utils.fromWei((response).toString(), 'ether');
       });
-      console.log('ESTIMATED PROFIT IN ETHER >>> ' + web3.utils.fromWei((estimatedProfit).toString(), 'ether'));
-      estimatedProfit = web3.utils.fromWei((estimatedProfit).toString(), 'ether') * 0.1;
-      console.log('ESTIMATED PROFIT IS ONLY 10%!!! IN ETHER (10%). ROOTKIT GETS 90%!!!!! >>> ' + estimatedProfit);
-      let txGasPrice = gasPrice * 2;
-      console.log('UPDATED GAS PRICE IN WEI >>> ' + txGasPrice);
-      console.log('UPDATED GAS PRICE IN GWEI >>> ' + web3.utils.fromWei((txGasPrice).toString(), 'gwei'));     
-      let txGasPriceFormatted= web3.utils.fromWei((txGasPrice).toString(), 'micro');
-      console.log('UPDATED GAS PRICE IN ETHER >>> ' + txGasPriceFormatted);
-
-      if(estimatedProfit > txGasPriceFormatted){
-          console.log('PROFIT OPPORTUNITY IN >>>> ' + title);
-          console.log('TX GAS PRICE >>>> ' + txGasPriceFormatted + ', PROFIT >>>> ' + estimatedProfit);
-          rootkitmoneyToken.methods.gimmeMoney(path, amount, 0).send({from: admin, gas: 999999, gasPrice: txGasPrice.toString()})
-            .then(function(receipt){
-                console.log(receipt);
-            });
-      }else{
-          console.log('ESTIMATED PROFIT: ' +estimatedProfit + ' IS LESS THAN POSSIBE GAS COST: ' + txGasPriceFormatted + '. NO CURRENT OPPORTUNITIES IN >>>> ' + title);
-      }
+    return estimatedProfit;
 }

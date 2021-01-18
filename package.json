@@ -20,6 +20,7 @@
   "dependencies": {
     "@studydefi/money-legos": "^2.4.1",
     "@sushiswap/sdk": "^3.0.1",
+    "@truffle/hdwallet-provider": "^1.2.1",
     "@uniswap/sdk": "^2.0.6",
     "SakeSwap": "github:Sakeswap/sakeswap-protocol",
     "dotenv": "^8.2.0",
