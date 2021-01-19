@@ -26,14 +26,16 @@ contract Flashloan is ICallee, DydxFlashloanBase {
     IKETH keth;
     IWeth weth;
     IERC20 root;
+    address beneficiary;
     mapping (address => bool) approved;
     mapping (address => bool) approvedContract;
 
-    constructor(address uniswapAddress, address kethAddress,address wethAddress, address rootAddress) public {
+    constructor(address uniswapAddress, address kethAddress, address wethAddress, address rootAddress, address beneficiaryAddress) public {
       uniswap = IUniswapV2Router02(uniswapAddress);
       keth = IKETH(kethAddress);
       weth = IWeth(wethAddress);
       root = IERC20(rootAddress);
+      beneficiary = beneficiaryAddress;
     }
 
     // This is the function that will be called postLoan
@@ -55,86 +57,47 @@ contract Flashloan is ICallee, DydxFlashloanBase {
                keth.deposit();
             }
             
-            goMakeMoney(arbInfo.tokenPath, amountOut);
+            showMeTheMoney(arbInfo.tokenPath, amountOut);
 
             uint256 finalBalance = weth.balanceOf(address(this));
             require(finalBalance >= arbInfo.repayAmount, "Not enough funds to repay dydx loan!");
             uint profit = finalBalance - arbInfo.repayAmount;
-            weth.transfer(msg.sender, profit);
+            weth.transfer(beneficiary, profit);
             emit NewArbitrage(profit, now);
         }
     }
 
-    function goMakeMoney(address[] memory _tokenPath, uint256 _amountIn) private
+    function showMeTheMoney(address[] memory _tokenPath, uint256 _amountIn) private
     {
         uint256 amountOut = _amountIn;
         address[] memory path = new address[](2);
-        uint256 swaps = _tokenPath.length;
-        for (uint256 x=0; x < swaps; x++) {
-            if(((x+1) == swaps) && (_tokenPath[x] == address(weth))){
-                break;
-            }else {
-                if(_tokenPath[x] == address(root)){
-                    if (!approved[address(_tokenPath[x])]) {
-                        IERC20(_tokenPath[x]).approve(address(uniswap), uint256(-1));
-                        approved[address(_tokenPath[x])] = true;
-                    }
-                    if (!approvedContract[address(_tokenPath[x])]) {
-                        IERC20(_tokenPath[x]).approve(address(this), uint256(-1));
-                        approvedContract[address(_tokenPath[x])] = true;
-                    }
-                    path[0] = _tokenPath[x];
-                    path[1] = _tokenPath[x+1];
-                    amountOut = amountOut.mul(150)/10000; // minus 1.5% fees
-                    uniswap.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountOut, 0, path, address(this), now);
-                    (uint256[] memory amounts) = uniswap.getAmountsOut(amountOut, path);
-                    amountOut = amounts[1];              
-                }else {
-                    if ((address(_tokenPath[x]) == address(weth))) {
-                        if (!approved[address(_tokenPath[x])]) {
-                            weth.approve(address(uniswap), uint256(-1));
-                            approved[address(_tokenPath[x])] = true;
-                        }
-                        if (!approvedContract[address(_tokenPath[x])]) {
-                            weth.approve(address(this), uint256(-1));
-                            approvedContract[address(_tokenPath[x])] = true;
-                        }
-                    }else if ((address(_tokenPath[x]) == address(keth))) {
-                        if (!approved[address(_tokenPath[x])]) {
-                            keth.approve(address(uniswap), uint256(-1));
-                            approved[address(_tokenPath[x])] = true;
-                        }
-                        if (!approvedContract[address(_tokenPath[x])]) {
-                            keth.approve(address(this), uint256(-1));
-                            approvedContract[address(_tokenPath[x])] = true;
-                        }
-                        if((x+1) == swaps){
-                            amountOut = amountOut.mul(150)/10000; // minus 1.5% fees
-                            keth.withdraw(amountOut);
-                            break;
-                        }
-                    }else {
-                        if (!approved[address(_tokenPath[x])]) {
-                            IERC20(_tokenPath[x]).approve(address(uniswap), uint256(-1));
-                            approved[address(_tokenPath[x])] = true;
-                        }
-                        if (!approvedContract[address(_tokenPath[x])]) {
-                            IERC20(_tokenPath[x]).approve(address(this), uint256(-1));
-                            approvedContract[address(_tokenPath[x])] = true;
-                        }
-                    }
-                    path[0] = _tokenPath[x];
-                    if(((x+1) == swaps) && (_tokenPath[x] != address(weth))){
-                        path[1] = address(weth);
-                    }else{
-                        path[1] = _tokenPath[x+1];
-                    }
-                    if((address(_tokenPath[x]) == address(keth))) {
-                        amountOut = amountOut.mul(150)/10000; // minus 1.5% fees
-                    }
-                    (uint256[] memory amounts) = uniswap.swapExactTokensForTokens(amountOut, 0, path, address(this), now);
-                    amountOut = amounts[1];
-                }
+        uint256 count = _tokenPath.length;
+        for (uint256 x=1; x<=count; ++x) {
+            address tokenIn = _tokenPath[x-1];
+            address tokenOut = _tokenPath[x%count];
+            if (tokenIn == tokenOut) { continue; }
+            if (tokenIn == address(weth) && tokenOut == address(keth)) {
+                // do nothing, we have weth already at the end of the swaps
+                continue;
+            }
+            if (tokenIn == address(keth) && tokenOut == address(weth)) {
+                keth.withdraw(amountOut);
+                continue;
+            }            
+            if (!approved[tokenIn]) {
+                IERC20(tokenIn).approve(address(uniswap), uint256(-1));
+                approved[tokenIn] = true;
+            }
+            path[0] = tokenIn;
+            path[1] = tokenOut;
+            if(tokenIn == address(root)){
+                amountOut = amountOut.mul(9850)/10000; // minus 1.5% fees
+                uniswap.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountOut, 0, path, address(this), now);
+                (uint256[] memory amounts) = uniswap.getAmountsOut(amountOut, path);
+                amountOut = amounts[1];
+            }else{
+                (uint256[] memory amounts) = uniswap.swapExactTokensForTokens(amountOut, 0, path, address(this), now);
+                amountOut = amounts[1];
             }
         }
     }
