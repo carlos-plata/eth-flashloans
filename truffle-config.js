@@ -82,7 +82,7 @@ module.exports = {
       ),
       network_id: 1,       //mainnet,
       gas: web3.eth.getBlock("pending").gasLimit,
-      gasPrice: 68000000000,
+      gasPrice: 65000000000,
     },
     ropsten: {
       provider: () => new HDWalletProvider(

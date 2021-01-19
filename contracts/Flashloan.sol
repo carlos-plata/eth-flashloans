@@ -81,6 +81,7 @@ contract Flashloan is ICallee, DydxFlashloanBase {
                 continue;
             }
             if (tokenIn == address(keth) && tokenOut == address(weth)) {
+                amountOut = amountOut.mul(9850)/10000; // minus 1.5% fees
                 keth.withdraw(amountOut);
                 continue;
             }            

@@ -24,16 +24,16 @@ const ONE_WEI = web3.utils.toBN(web3.utils.toWei('1'));
 
 const rootkitmoneyToken = new web3.eth.Contract(rootkitmoneyabi.rootkitmoney,addresses.tokens.rootkitmoney);
 const flashloan = new web3.eth.Contract(flashloanabi.flashloan, addresses.tokens.flashloan);
-const moneymaker = new web3.eth.Contract(moneymakerabi.moneymaker, addresses.tokens.moneymaker);
+const moneymaker = new web3.eth.Contract(flashloanabi.flashloan, addresses.tokens.moneymaker);
 
-const ETH_AMOUNT= web3.utils.toWei('5', 'ether');
+const ETH_AMOUNT= web3.utils.toWei('13', 'ether');
 let walletBalance= 0;
 
 const TOKEN_PATH = {
     WETH_WBTC_ROOT_KETH: ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0x1df2099f6AbBf0b05C12a61835137D84F10DAA96'],
     WEHT_WBTC_ROOT_WETH: ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'],
-    WETH_ROOT_KETH: ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0x1df2099f6AbBf0b05C12a61835137D84F10DAA96']
-    //WETH_ROOT_WBTC: ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'],
+    WETH_ROOT_KETH: ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0x1df2099f6AbBf0b05C12a61835137D84F10DAA96'],
+    WETH_ROOT_WBTC: ['0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'],
     //KETH_ROOT_WETH: ['0x1df2099f6AbBf0b05C12a61835137D84F10DAA96', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'],
     //KETH_ROOT_WBTC_WETH: ['0x1df2099f6AbBf0b05C12a61835137D84F10DAA96', '0xCb5f72d37685C3D5aD0bB5F982443BC8FcdF570E', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2']
 }
@@ -85,7 +85,7 @@ async function goMakeMoney(tokenPath, key, amount, ethPrice){
     console.log('ESTIMATED PROFIT IN ETHER >>> ' + web3.utils.fromWei(web3.utils.toBN(estimatedProfit), 'ether'));
 
     let txCost= 0;
-    txCost= await flashloan.methods.initiateFlashloan(addresses.dydx.solo, addresses.tokens.weth, amount, tokenPath)
+    txCost= await moneymaker.methods.initiateFlashloan(addresses.dydx.solo, addresses.tokens.weth, amount, tokenPath)
     .estimateGas({from: admin, gas: pendingBlockGasLimit})
     .then(function(gasAmount){
         console.log('THIS IS THE COST OF INITIATE FLASH LOAN >>>> ' + gasAmount);
@@ -103,7 +103,7 @@ async function goMakeMoney(tokenPath, key, amount, ethPrice){
     if((txCost > 0) && (estimatedProfit > txCost) && (walletBalance > txCost)){
         console.log('OPPORTUNITY FOR ' +  key + ' GO MAKE MONEY !!! >>>>');
         // using the promise
-        flashloan.methods.initiateFlashloan(addresses.dydx.solo, addresses.tokens.weth, amount, tokenPath)
+        moneymaker.methods.initiateFlashloan(addresses.dydx.solo, addresses.tokens.weth, amount, tokenPath)
         .send({from: admin, gasPrice: gasPrice, gas: pendingBlockGasLimit})
         .on('receipt', function(receipt){
             console.log('PRINTING TX RECEIPT >>>> ');
