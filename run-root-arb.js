@@ -26,7 +26,7 @@ const rootkitmoneyToken = new web3.eth.Contract(rootkitmoneyabi.rootkitmoney,add
 const flashloan = new web3.eth.Contract(flashloanabi.flashloan, addresses.tokens.flashloan);
 const moneymaker = new web3.eth.Contract(flashloanabi.flashloan, addresses.tokens.moneymaker);
 
-const ETH_AMOUNT= web3.utils.toWei('13', 'ether');
+const ETH_AMOUNT= web3.utils.toWei('18', 'ether');
 let walletBalance= 0;
 
 const TOKEN_PATH = {
